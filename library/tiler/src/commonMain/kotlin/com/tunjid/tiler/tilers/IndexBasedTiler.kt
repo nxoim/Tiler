@@ -17,6 +17,7 @@
 package com.tunjid.tiler.tilers
 
 import com.tunjid.tiler.QueryFetcher
+import com.tunjid.tiler.concurrentListTiler
 import com.tunjid.tiler.utilities.neighboredQueryFetcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -127,11 +128,12 @@ fun <Item> IndexBasedTiler(
     initialIndex: Long,
     configuration: Flow<GenericTilerConfiguration<Long>>,
     fetcher: QueryFetcher<Long, Item>,
-): GenericTiler<Long, Item> = GenericConcurrentTilerImpl<Long, Item>(
+): GenericTiler<Long, Item> = GenericTilerImpl<Long, Item>(
     coroutineScope = coroutineScope,
     initial = initialIndex,
     configuration = configuration,
     fetcher = fetcher,
+    listTilerBuilder = ::concurrentListTiler,
     onNextQueryRequest = { sourceQuery -> sourceQuery + 1 },
     onPreviousQueryRequest = { sourceQuery ->  (sourceQuery - 1).takeIf { it >= 0 } },
 )

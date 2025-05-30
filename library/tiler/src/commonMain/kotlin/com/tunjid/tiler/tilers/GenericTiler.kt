@@ -21,8 +21,6 @@ import com.tunjid.tiler.PivotRequest
 import com.tunjid.tiler.QueryFetcher
 import com.tunjid.tiler.Tile
 import com.tunjid.tiler.TiledList
-import com.tunjid.tiler.concurrentListTiler
-import com.tunjid.tiler.listTiler
 import com.tunjid.tiler.tiledListOf
 import com.tunjid.tiler.toPivotedTileInputs
 import com.tunjid.tiler.toTiledList
@@ -61,6 +59,11 @@ internal class GenericTilerImpl<Query : Any, Item>(
     private val initial: Query,
     private val configuration: Flow<GenericTilerConfiguration<Query>>,
     private val fetcher: QueryFetcher<Query, Item>,
+    private val listTilerBuilder: (
+        order: Tile.Order<Query, Item>,
+        limiter: Tile.Limiter<Query, Item>,
+        fetcher: QueryFetcher<Query, Item>,
+    ) -> ListTiler<Query, Item>,
     private val onNextQueryRequest: (sourceQuery: Query) -> Query,
     private val onPreviousQueryRequest: (sourceQuery: Query) -> Query?,
 ) : GenericTiler<Query, Item> {
@@ -73,37 +76,11 @@ internal class GenericTilerImpl<Query : Any, Item>(
         fetcher = fetcher,
         nextQuery = onNextQueryRequest,
         previousQuery = onPreviousQueryRequest,
-        listTilerBuilder = ::listTiler
+        listTilerBuilder = listTilerBuilder
     ).stateIn(coroutineScope, SharingStarted.WhileSubscribed(), tiledListOf())
 
     override fun setMostRelevantQuery(to: Query) {
         mostRelevantQuery.update { to }
-    }
-}
-
-internal class GenericConcurrentTilerImpl<Query : Any, Item>(
-    private val coroutineScope: CoroutineScope,
-    private val initial: Query,
-    configuration: Flow<GenericTilerConfiguration<Query>>,
-    fetcher: QueryFetcher<Query, Item>,
-    onNextQueryRequest: (sourceQuery: Query) -> Query,
-    onPreviousQueryRequest: (sourceQuery: Query) -> Query?,
-) : GenericTiler<Query, Item> {
-    private val mostRelevant = MutableStateFlow<Query>(initial)
-
-    override val relevantTiles = createGenericTiledListFlow(
-        initial = initial,
-        mostRelevantQuery = mostRelevant,
-        configuration = configuration,
-        fetcher = fetcher,
-        nextQuery = onNextQueryRequest,
-        previousQuery = onPreviousQueryRequest,
-        listTilerBuilder = ::concurrentListTiler
-    )
-        .stateIn(coroutineScope, SharingStarted.WhileSubscribed(), tiledListOf())
-
-    override fun setMostRelevantQuery(to: Query) {
-        mostRelevant.update { to }
     }
 }
 
