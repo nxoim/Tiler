@@ -64,7 +64,7 @@ internal class GenericTilerImpl<Query : Any, Item>(
         limiter: Tile.Limiter<Query, Item>,
         fetcher: QueryFetcher<Query, Item>,
     ) -> ListTiler<Query, Item>,
-    private val onNextQueryRequest: (sourceQuery: Query) -> Query,
+    private val onNextQueryRequest: (sourceQuery: Query) -> Query?,
     private val onPreviousQueryRequest: (sourceQuery: Query) -> Query?,
 ) : GenericTiler<Query, Item> {
     private val mostRelevantQuery = MutableStateFlow<Query>(initial)
@@ -93,7 +93,7 @@ private fun <Query : Any, Item> createGenericTiledListFlow(
     mostRelevantQuery: StateFlow<Query>,
     configuration: Flow<GenericTilerConfiguration<Query>>,
     fetcher: QueryFetcher<Query, Item>,
-    nextQuery: Query.() -> Query,
+    nextQuery: Query.() -> Query?,
     previousQuery: Query.() -> Query?,
     listTilerBuilder: (
         order: Tile.Order<Query, Item>,
